@@ -1,28 +1,11 @@
-window.onload = function(){
-    const board = document.getElementById("board");
-    let status = document.getElementById('status');
-    const game = document.querySelector('.game');
-    const newGameBtn = document.querySelector(".btn");
-    let squares = document.querySelectorAll("#board div");
-    let box = [' ',' ',' ',' ',' ',' ',' ',' ',' '];
-    let currentPlayer = "X";
+window.addEventListener('load', function () {
+    const board = document.getElementById('board');
+    const status = document.getElementById('status');
+    const newGameBtn = document.querySelector('.btn');
+    const squares = document.querySelectorAll('#board div');
+    let box = Array(9).fill(' ');
+    let currentPlayer = 'X';
     let gameRunning = true;
-    newGameBtn.addEventListener("click", newGame);
-
-    
-    const updateBox =  (index) => {
-        box[index] = currentPlayer;
-    }
-
-    const switchPlayer = () => {
-        if (currentPlayer == "X"){
-            currentPlayer = "O"; 
-        }
-        else{
-            currentPlayer = "X";
-        }
-    }
-
     const winningConditions = [
         [0, 1, 2],
         [3, 4, 5],
@@ -31,96 +14,82 @@ window.onload = function(){
         [1, 4, 7],
         [2, 5, 8],
         [0, 4, 8],
-        [2, 4, 6]
+        [2, 4, 6],
     ];
-
-    const PLAYERX_WON = 'PLAYERX_WON';
-    const PLAYERO_WON = 'PLAYERO_WON';
+    const PLAYER_X_WON = 'PLAYER_X_WON';
+    const PLAYER_O_WON = 'PLAYER_O_WON';
     const TIE = 'TIE';
 
-    function showResults() {
-        let roundWon = false;
-        for (let i = 0; i <= 7; i++) {
-            const winCondition = winningConditions[i];
-            const a = box[winCondition[0]];
-            const b = box[winCondition[1]];
-            const c = box[winCondition[2]];
-            if (a === ' ' || b === ' ' || c === ' ') {
-                continue;
-            }
-            if (a === b && b === c) {
-                roundWon = true;
+    function announceResult(result) {
+        switch (result) {
+            case PLAYER_X_WON:
+                status.textContent = 'Congratulations! Player X is the winner!';
                 break;
-            }
+            case PLAYER_O_WON:
+                status.textContent = 'Congratulations! Player O is the winner!';
+                break;
+            case TIE:
+                status.textContent = 'It\'s a tie!';
+                break;
         }
-
-    if (roundWon) {
-            announce(currentPlayer === 'X' ? PLAYERX_WON : PLAYERO_WON);
-            gameRunning = false;
-            return;
-        }
-
-    if (!box.includes(' '))
-          announce(TIE);
+        status.classList.add('you-won');
     }
 
-    const announce = (type) => {
-        switch(type){
-            case PLAYERO_WON:
-                status.innerHTML = 'Congratulations! X is the Winner!';
-                break;
-            case PLAYERX_WON:
-                status.innerHTML = "Congratulations! O is the Winner!";
-                break;
-             case TIE:
-                 status.innerText = 'Tie!';
-        }
-        status.setAttribute("class","you-won");
-    };
+    function handleSquareClick(index) {
+        if (gameRunning && box[index] === ' ') {
+            squares[index].textContent = currentPlayer;
+            squares[index].classList.add(currentPlayer);
+            box[index] = currentPlayer;
 
-
-    const clicked = (squares, index) => {
-        if(gameRunning && squares.innerHTML == "") {
-            squares.innerHTML = currentPlayer;
-            squares.classList.add(currentPlayer);
-            updateBox(index);
-            switchPlayer();
-            showResults();
+            if (checkForWin() || checkForTie()) {
+                gameRunning = false;
+            } else {
+                switchPlayer();
+            }
         }
     }
-    
-    
-    squares.forEach( (squares, index) => {
-        
-        squares.addEventListener('click', () => clicked(squares, index));
-         
+
+    function checkForWin() {
+        for (const condition of winningConditions) {
+            const [a, b, c] = condition;
+            if (box[a] !== ' ' && box[a] === box[b] && box[a] === box[c]) {
+                announceResult(currentPlayer === 'X' ? PLAYER_X_WON : PLAYER_O_WON);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function checkForTie() {
+        if (!box.includes(' ')) {
+            announceResult(TIE);
+            return true;
+        }
+        return false;
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    }
+
+    squares.forEach((square, index) => {
+        square.addEventListener('click', () => handleSquareClick(index));
+        square.classList.add('square');
+        square.addEventListener('mouseover', () => square.classList.add('hover'));
+        square.addEventListener('mouseout', () => square.classList.remove('hover'));
     });
 
-    for (let s in squares){
-    
-        squares[s].classList.add("square");
-        squares[s].onmouseover = function(){squares[s].classList.toggle('hover', true)}
-        squares[s].onmouseout = function(){squares[s].classList.toggle('hover', false)}
-        
-    }
+    newGameBtn.addEventListener('click', newGame);
 
-    
     function newGame() {
-        box = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+        box = Array(9).fill(' ');
+        currentPlayer = 'X';
         gameRunning = true;
-        status.innerText = "Move your mouse over a square and click to play an X or an O.";
-        status.setAttribute("class","status");
-        if (currentPlayer === 'O') {
-            switchPlayer();
-        }
-        squares.forEach(squares => {
-            squares.innerText = "";
-            squares.classList.remove('X');
-            squares.classList.remove('O');
+        status.textContent = 'Move your mouse over a square and click to play an X or an O.';
+        status.classList.remove('you-won');
+        squares.forEach((square) => {
+            square.textContent = '';
+            square.classList.remove('X', 'O');
         });
     }
-
-
-    
-
-}
+});
